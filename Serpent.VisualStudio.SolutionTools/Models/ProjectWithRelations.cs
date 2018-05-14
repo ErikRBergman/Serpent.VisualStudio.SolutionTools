@@ -4,18 +4,23 @@
 
     public class ProjectWithRelations
     {
-        public ProjectWithRelations(Project project)
+        public ProjectWithRelations(
+            Project project, 
+            IReadOnlyCollection<ProjectWithRelations> internalReferences,
+            IReadOnlyCollection<ProjectWithRelations> referrals)
         {
             this.Project = project;
+            this.InternalReferences = internalReferences;
+            this.Referrals = referrals;
         }
 
         public Project Project { get; }
 
         public string Name => this.Project.Name;
 
-        public IReadOnlyCollection<ProjectWithRelations> Referrals { get; set; }
+        public IReadOnlyCollection<ProjectWithRelations> Referrals { get; }
 
-        public IReadOnlyCollection<ProjectWithRelations> InternalReferences { get; set; }
+        public IReadOnlyCollection<ProjectWithRelations> InternalReferences { get; }
 
         public override string ToString()
         {

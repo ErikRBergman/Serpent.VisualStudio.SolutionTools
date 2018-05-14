@@ -1,40 +1,29 @@
-﻿using System;
-
-namespace Serpent.VisualStudio.SolutionTools.Console
+﻿namespace Serpent.VisualStudio.SolutionTools.Console
 {
-    using System.Collections.Generic;
+    using System;
     using System.IO;
     using System.Linq;
     using System.Threading.Tasks;
 
-    using Serpent.Common.Async;
+    using Serpent.VisualStudio.SolutionTools.Applications;
+    using Serpent.VisualStudio.SolutionTools.File;
 
-    using Console = System.Console;
-
-    class Program
+    internal class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             MainAsync(args).GetAwaiter().GetResult();
         }
 
-        static async Task MainAsync(string[] args)
+        private static async Task MainAsync(string[] args)
         {
-            var projectFiles = new List<string>();
+            var projects = (await ProjectFileLoader.LoadAllProjectsInDirectoriesAsync(
+                                "c:\\projects\\insclear\\heartbeat\\src",
+                                d => Directory.EnumerateFiles(d.ProjectPath, "*publish*.ps1").Any() ? d.ProjectFiles : Array.Empty<string>())).ToArray();
 
-            foreach (var directory in Directory.EnumerateDirectories(args[0], "*.*", SearchOption.AllDirectories))
-            {
-                if (Directory.EnumerateFiles(directory, "*publish*.ps1").Any())
-                {
-                    projectFiles.AddRange(Directory.EnumerateFiles(directory, "*.csproj"));
-                }
-            }
+            var dependencies = ProjectRelationsService.GetProjectsWithRelationsTree(projects);
 
-            var projects = (await projectFiles.ForEachAsync(ProjectLoader.LoadProjectAsync, 16)).OrderBy(p => p.Name);
-
-            var dependencies = DependencyGenerator.GetProjectsWithReferrals(projects);
-
-            var x = projects;
+            var projectsInBuildOrder = BuildOrderService.GetProjectsInBuildOrder(dependencies);
         }
     }
 }

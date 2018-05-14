@@ -14,6 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Serpent.VisualStudio.SolutionTools.Applications\Serpent.VisualStudio.SolutionTools.Applications.csproj" />
     <ProjectReference Include="..\Serpent.VisualStudio.SolutionTools\Serpent.VisualStudio.SolutionTools.csproj" />
   </ItemGroup>
 

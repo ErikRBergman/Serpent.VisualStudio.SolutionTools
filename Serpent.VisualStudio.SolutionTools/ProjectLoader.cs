@@ -12,6 +12,67 @@
 
     public class ProjectLoader
     {
+        public static IEnumerable<Reference> GetItemGroupPackageReferences(XElement xmlProject)
+        {
+            var references = new List<Reference>();
+
+            foreach (var packageReference in xmlProject.Elements("PackageReference"))
+            {
+                var referenceName = packageReference.Attribute("Include");
+                var version = packageReference.Attribute("Version");
+
+                references.Add(
+                    new Reference(ReferenceType.Package)
+                        {
+                            ReferenceName = referenceName.Value,
+                            Version = Version.Parse(version.Value)
+                        });
+            }
+
+            return references;
+        }
+
+        public static IEnumerable<Reference> GetItemGroupProjectReferences(XElement xmlProject)
+        {
+            var references = new List<Reference>();
+
+            foreach (var packageReference in xmlProject.Elements("ProjectReference"))
+            {
+                var referenceName = packageReference.Attribute("Include");
+
+                references.Add(
+                    new Reference(ReferenceType.Project)
+                        {
+                            ReferenceName = Path.GetFileNameWithoutExtension(referenceName.Value),
+                            ReferenceFullName = referenceName.Value
+                        });
+            }
+
+            return references;
+        }
+
+        public static IEnumerable<Reference> GetProjectReferences(XElement xmlProject)
+        {
+            var references = new List<Reference>();
+
+            foreach (var propertyGroup in xmlProject.Elements("ItemGroup"))
+            {
+                references.AddRange(GetItemGroupPackageReferences(propertyGroup));
+                references.AddRange(GetItemGroupProjectReferences(propertyGroup));
+            }
+
+            return references;
+        }
+
+        public static async Task<Project> LoadProjectAsync(string filename)
+        {
+            var projectText = await FileHelper.ReadAllText(filename);
+            var project = Parse(projectText);
+            project.Filename = filename;
+            project.Name = Path.GetFileNameWithoutExtension(filename);
+            return project;
+        }
+
         public static Project Parse(string projectText)
         {
             var doc = XDocument.Parse(projectText);
@@ -21,9 +82,9 @@
                 throw new Exception("Unparsable XML");
             }
 
-            if (doc.Root.Name != "Project" && doc.Root.Attribute("Sdk").Value != "Microsoft.NET.Sdk")
+            if (doc.Root.Name != "Project" && doc.Root.Attribute("Sdk")?.Value != "Microsoft.NET.Sdk")
             {
-                throw new Exception("The project is not a valid Visual Studio 2017 project file");
+                throw new Exception("The project is not a valid Visual Studio 2017 project");
             }
 
             var xmlProject = doc.Root;
@@ -32,10 +93,10 @@
             var references = GetProjectReferences(xmlProject);
 
             return new Project
-            {
-                Versions = projectVersions,
-                References = references.ToArray()
-            };
+                       {
+                           Versions = projectVersions,
+                           References = references.ToArray()
+                       };
         }
 
         private static ProjectVersions GetProjectVersions(XElement xmlProject)
@@ -64,66 +125,6 @@
             }
 
             return projectVersions;
-        }
-
-        public static IEnumerable<Reference> GetProjectReferences(XElement xmlProject)
-        {
-            var references = new List<Reference>();
-
-            foreach (var propertyGroup in xmlProject.Elements("ItemGroup"))
-            {
-                references.AddRange(GetItemGroupPackageReferences(propertyGroup));
-                references.AddRange(GetItemGroupProjectReferences(propertyGroup));
-            }
-
-            return references;
-        }
-
-
-        public static IEnumerable<Reference> GetItemGroupPackageReferences(XElement xmlProject)
-        {
-            var references = new List<Reference>();
-
-            foreach (var packageReference in xmlProject.Elements("PackageReference"))
-            {
-                var referenceName = packageReference.Attribute("Include");
-                var version = packageReference.Attribute("Version");
-
-                references.Add(new Reference(ReferenceType.Package)
-                {
-                    ReferenceName = referenceName.Value,
-                    Version = Version.Parse(version.Value)
-                });
-            }
-
-            return references;
-        }
-
-        public static IEnumerable<Reference> GetItemGroupProjectReferences(XElement xmlProject)
-        {
-            var references = new List<Reference>();
-
-            foreach (var packageReference in xmlProject.Elements("ProjectReference"))
-            {
-                var referenceName = packageReference.Attribute("Include");
-
-                references.Add(new Reference(ReferenceType.Project)
-                {
-                    ReferenceName = Path.GetFileNameWithoutExtension(referenceName.Value),
-                    ReferenceFullName = referenceName.Value,
-                });
-            }
-
-            return references;
-        }
-
-        public static async Task<Project> LoadProjectAsync(string filename)
-        {
-            var projectText = await FileHelper.ReadAllText(filename);
-            var project = Parse(projectText);
-            project.Filename = filename;
-            project.Name = Path.GetFileNameWithoutExtension(filename);
-            return project;
         }
     }
 }

@@ -4,10 +4,6 @@
 
     public class Reference
     {
-        public Reference()
-        {
-        }
-
         public Reference(ReferenceType referenceType)
         {
             this.ReferenceType = referenceType;

@@ -5,12 +5,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Serpent.Common.Async" Version="1.1.0.3" />
     <PackageReference Include="Serpent.Common.BaseTypeExtensions" Version="0.2.0.3" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Extensions\" />
+    <ProjectReference Include="..\Serpent.VisualStudio.SolutionTools\Serpent.VisualStudio.SolutionTools.csproj" />
   </ItemGroup>
 
 </Project>

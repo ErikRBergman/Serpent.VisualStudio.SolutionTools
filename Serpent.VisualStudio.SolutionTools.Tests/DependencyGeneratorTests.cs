@@ -74,7 +74,7 @@
                                        }
                                };
 
-            var relations = DependencyGenerator.GetProjectsWithReferrals(projects);
+            var relations = ProjectRelationsService.GetProjectsWithRelationsTree(projects);
 
             Assert.Single(relations);
 
