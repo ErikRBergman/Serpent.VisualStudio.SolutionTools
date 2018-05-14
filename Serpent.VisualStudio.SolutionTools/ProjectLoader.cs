@@ -5,14 +5,15 @@
     using System.IO;
     using System.Linq;
     using System.Threading.Tasks;
-    using System.Xml.Linq;
+    using System.Xml;
 
+    using Serpent.VisualStudio.SolutionTools.Extensions;
     using Serpent.VisualStudio.SolutionTools.Helpers;
     using Serpent.VisualStudio.SolutionTools.Models;
 
     public class ProjectLoader
     {
-        public static IEnumerable<Reference> GetItemGroupPackageReferences(XElement xmlProject)
+        public static IEnumerable<Reference> GetItemGroupPackageReferences(XmlElement xmlProject)
         {
             var references = new List<Reference>();
 
@@ -32,7 +33,7 @@
             return references;
         }
 
-        public static IEnumerable<Reference> GetItemGroupProjectReferences(XElement xmlProject)
+        public static IEnumerable<Reference> GetItemGroupProjectReferences(XmlElement xmlProject)
         {
             var references = new List<Reference>();
 
@@ -51,7 +52,7 @@
             return references;
         }
 
-        public static IEnumerable<Reference> GetProjectReferences(XElement xmlProject)
+        public static IEnumerable<Reference> GetProjectReferences(XmlElement xmlProject)
         {
             var references = new List<Reference>();
 
@@ -75,19 +76,12 @@
 
         public static Project Parse(string projectText)
         {
-            var doc = XDocument.Parse(projectText);
+            var projectDocument = new XmlDocument();
+            projectDocument.LoadXml(projectText);
 
-            if (doc.Root == null)
-            {
-                throw new Exception("Unparsable XML");
-            }
+            ProjectValidationService.ThrowIfInvalidProject(projectDocument);
 
-            if (doc.Root.Name != "Project" && doc.Root.Attribute("Sdk")?.Value != "Microsoft.NET.Sdk")
-            {
-                throw new Exception("The project is not a valid Visual Studio 2017 project");
-            }
-
-            var xmlProject = doc.Root;
+            XmlElement xmlProject = (XmlElement)projectDocument.FirstChild;
 
             var projectVersions = GetProjectVersions(xmlProject);
             var references = GetProjectReferences(xmlProject);
@@ -99,28 +93,28 @@
                        };
         }
 
-        private static ProjectVersions GetProjectVersions(XElement xmlProject)
+        private static ProjectVersions GetProjectVersions(XmlElement xmlProject)
         {
             var projectVersions = new ProjectVersions();
 
-            foreach (var propertyGroup in xmlProject.Elements("PropertyGroup"))
+            foreach (XmlElement propertyGroup in xmlProject.Elements("PropertyGroup"))
             {
                 var version = propertyGroup.Element("Version");
                 if (version != null)
                 {
-                    projectVersions.Version = Version.Parse(version.Value);
+                    projectVersions.Version = Version.Parse(version.InnerText);
                 }
 
                 var fileVersion = propertyGroup.Element("FileVersion");
                 if (fileVersion != null)
                 {
-                    projectVersions.FileVersion = Version.Parse(fileVersion.Value);
+                    projectVersions.FileVersion = Version.Parse(fileVersion.InnerText);
                 }
 
                 var assemblyVersion = propertyGroup.Element("AssemblyVersion");
                 if (assemblyVersion != null)
                 {
-                    projectVersions.AssemblyVersion = Version.Parse(assemblyVersion.Value);
+                    projectVersions.AssemblyVersion = Version.Parse(assemblyVersion.InnerText);
                 }
             }
 

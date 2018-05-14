@@ -27,8 +27,11 @@
                 return project;
             }
 
-            project = new ProjectWithRelations(this.Project, this.InternalReferences.Select(r => r.ToProjectWithRelations(context)).ToArray(), this.Referrals.Select(r => r.ToProjectWithRelations(context)).ToArray());
+            project = new ProjectWithRelations(this.Project);
             context.Add(project.Project, project);
+
+            project.InternalReferences = this.InternalReferences.Select(r => r.ToProjectWithRelations(context)).ToArray();
+            project.Referrals = this.Referrals.Select(r => r.ToProjectWithRelations(context)).ToArray();
 
             return project;
         }
